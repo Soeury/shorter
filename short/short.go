@@ -18,7 +18,7 @@ func main() {
 	flag.Parse()
 
 	var c config.Config
-	conf.MustLoad(*configFile, &c)
+	conf.MustLoad(*configFile, &c) // 加载配置
 
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()

@@ -34,3 +34,7 @@ goctl model mysql datasource -url="root:123456@tcp(127.0.0.1:3306)/short" -table
 # 下载依赖
 go mod tidy
 ```
+
+
+
+### 修改配置文件
