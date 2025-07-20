@@ -7,7 +7,7 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
-// 基于 mysql 实现的取号器
+// 基于mysql实现的取号器
 const sqlReplaceIntoStub = `replace into sequence (stub) values ('a')`
 
 type SMysql struct {

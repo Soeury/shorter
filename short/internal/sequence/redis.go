@@ -7,7 +7,7 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/redis"
 )
 
-// 基于redis实现的取号器
+// 基于 redis 实现的取号器
 var SeqKey = "Shortener:Sequence:SeqKey"
 
 type SRedis struct {
