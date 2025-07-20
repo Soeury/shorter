@@ -38,3 +38,9 @@ go mod tidy
 
 
 ### 修改配置文件
+增加链接数据库配置
+
+
+
+### Start
+* 1.校验长链: validate
