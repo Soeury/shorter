@@ -14,20 +14,25 @@ import (
 
 func ConvertHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// 参数解析
 		var req types.ConvertRequest
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
 		}
 
-		// 参数校验 validate，输入长链不为空
+		// 参数校验 validate
 		if err := validator.New().StructCtx(r.Context(), &req); err != nil {
-			logx.Errorw("validator check failed", logx.LogField{Key: "err", Value: err.Error()})
+			logx.Errorw(
+				"validator check failed",
+				logx.LogField{Key: "err", Value: err.Error()},
+			)
+
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
 		}
 
-		// 执行业务
+		// 执行逻辑
 		l := logic.NewConvertLogic(r.Context(), svcCtx)
 		resp, err := l.Convert(&req)
 		if err != nil {

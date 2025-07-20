@@ -45,4 +45,5 @@ go mod tidy
 ### Start
 * 1. 校验长链: validate, 修改handler部分和api，增加validate校验部分，长链不为空
 * 2. 长链有效：实现自定义部分connect, 调用检查长链是否能get并返回200
-* 3. 获取md5值, 
+* 3. 获取md5值, 查询长链是否被转存过
+* 4. 获取URL path, 查询传入的长链是否是短链

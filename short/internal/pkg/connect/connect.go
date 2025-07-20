@@ -18,7 +18,11 @@ var client = &http.Client{
 func Get(url string) bool {
 	resp, err := client.Get(url)
 	if err != nil {
-		logx.Errorw("connect client.Get failed", logx.LogField{Key: "err", Value: err.Error()})
+		logx.Errorw(
+			"connect client.Get failed",
+			logx.LogField{Key: "err", Value: err.Error()},
+		)
+
 		return false
 	}
 
