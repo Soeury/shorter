@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"short/internal/pkg/base62"
 	"short/internal/pkg/connect"
 	"short/internal/pkg/md5"
 	"short/internal/pkg/urltool"
@@ -38,7 +39,7 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		return nil, errors.New("invalid longUrl")
 	}
 
-	// - 长链未转存过
+	// - 查长链(md5)
 	md5Value := md5.Sum([]byte(req.LongUrl))
 	_, err = l.svcCtx.ShortUrlModel.FindOneByMd5(l.ctx, sql.NullString{String: md5Value, Valid: true})
 	if err != sqlx.ErrNotFound {
@@ -65,7 +66,7 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		return nil, err
 	}
 
-	// - 不能传入短链
+	// - 查短链
 	_, err = l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: baseUrl, Valid: true})
 	if err != sqlx.ErrNotFound {
 		if err == nil {
@@ -79,6 +80,23 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 
 		return nil, err
 	}
+
+	var seq uint64
+	var short string
+
+	// 2. 取号
+	seq, err = l.svcCtx.Sequence.Next()
+	if err != nil {
+		logx.Errorw(
+			"l.svcCtx.Sequence.Next failed,",
+			logx.LogField{Key: "err", Value: err.Error()},
+		)
+	}
+
+	// 3. 号码转短链
+	// - 安全性: 打乱62进制字符
+	// - 避免特殊字符
+	short = base62.ChangeToBase62(seq)
 
 	return nil, nil
 }

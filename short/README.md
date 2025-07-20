@@ -47,3 +47,6 @@ go mod tidy
 * 2. 长链有效：实现自定义部分connect, 调用检查长链是否能get并返回200
 * 3. 获取md5值, 查询长链是否被转存过
 * 4. 获取URL path, 查询传入的长链是否是短链
+* 5. 针对urltool, md5, base62编写单元测试
+* 6. 实现发号器 (mysql:replace, redis:incr) 复用接口
+* 7. 号码转短链：10 ---> 62进制

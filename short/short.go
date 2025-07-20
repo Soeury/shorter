@@ -6,6 +6,7 @@ import (
 
 	"short/internal/config"
 	"short/internal/handler"
+	"short/internal/pkg/base62"
 	"short/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/conf"
@@ -20,6 +21,8 @@ func main() {
 	var c config.Config
 	conf.MustLoad(*configFile, &c) // 加载配置
 	fmt.Printf("load config: %#v\n", c)
+
+	base62.MustInit(c.Base62String) // base62模块初始化
 
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()

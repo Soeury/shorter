@@ -7,3 +7,5 @@ ShortUrlDB:
 
 Sequence:
   DSN: "root:123456@tcp(127.0.0.1:3306)/short?charset=utf8mb4&parseTime=true"
+
+Base62String: McOP123w4589abdefghlmnopqrstuvxyzBC0D6EFG7HIJKLANQRSTUiVWXjYZk
