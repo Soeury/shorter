@@ -25,5 +25,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: ConvertHandler(serverCtx),
 			},
 		},
+		rest.WithPrefix("/api"),
 	)
 }

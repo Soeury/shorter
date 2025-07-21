@@ -48,7 +48,7 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 	}
 
 	// 2. 根据短链接查询长连接(采用go-zero生成带缓存的Mysql查询, 内嵌singleflight做请求合并)
-	// 短链转成 10 进制，判断序号奇偶性，然后查库
+	// 短链转成 10 进制，判断序号奇偶性，查库
 	seq := base62.ChangeToBase10(req.ShortUrl)
 	if seq%2 == 1 {
 		u, err := l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: req.ShortUrl, Valid: true})
@@ -94,7 +94,6 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 				}
 			}
 		}
-
 		return &types.ShowResponse{LongUrl: u.Lurl.String}, nil
 	} else {
 		u, err := l.svcCtx.ShortUrlModel2.FindOneBySurl(l.ctx, sql.NullString{String: req.ShortUrl, Valid: true})

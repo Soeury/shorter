@@ -1,3 +1,5 @@
+syntax = "v1"
+
 type ShowRequest {
 	ShortUrl string `path:"shortUrl" validate:"required"`
 }
@@ -7,13 +9,18 @@ type ShowResponse {
 }
 
 type ConvertRequest {
-	LongUrl string `json:"longUrl" validate:"required"`
+	LongUrl     string `json:"longUrl" validate:"required"`
+	UserDef     bool   `json:"userDef,options=true|false,default=false"`
+	DefShortUrl string `json:"defShortUrl"`
 }
 
 type ConvertResponse {
 	ShortUrl string `json:"shortUrl"`
 }
 
+@server (
+	prefix: api
+)
 service short-api {
 	@handler ConvertHandler
 	post /convert (ConvertRequest) returns (ConvertResponse)

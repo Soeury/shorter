@@ -4,7 +4,9 @@
 package types
 
 type ConvertRequest struct {
-	LongUrl string `json:"longUrl" validate:"required"`
+	LongUrl     string `json:"longUrl" validate:"required"`
+	UserDef     bool   `json:"userDef,options=true|false,default=false"`
+	DefShortUrl string `json:"defShortUrl"`
 }
 
 type ConvertResponse struct {

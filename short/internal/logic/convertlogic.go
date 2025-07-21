@@ -124,6 +124,7 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		if _, ok := l.svcCtx.ShortUrlBlackList[short]; ok {
 			logx.Errorw(
 				"short existed in balck list",
+				logx.LogField{Key: "err", Value: errors.New("short existed in black list").Error()},
 			)
 		} else if !ok {
 			break
