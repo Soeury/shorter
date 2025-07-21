@@ -1,7 +1,7 @@
 # 短URL链接系统
 基于go-zero开发的短URL链接系统，针对读多写少场景实现的长链接生成短链重定向
 
-### 项目结构
+## 项目结构
 ```bash
 short/
 ├─etc   # 配置文件
@@ -16,10 +16,10 @@ short/
 └─model   # 数据模型
 ```
 
-### Start
+## Start
 1. 拉取代码
 ```bash
-go clone 
+go clone git@github.com:Soeury/shorter.git
 cd short 
 ```
 
@@ -39,6 +39,6 @@ cp etc/short-example.yaml etc/short-api.yaml
 go run short.go 
 ```
 
-### 主要功能
+## 主要功能
 * 生成可靠短链
 * 短链重定向
