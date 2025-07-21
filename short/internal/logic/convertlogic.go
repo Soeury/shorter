@@ -12,6 +12,7 @@ import (
 	"short/internal/pkg/urltool"
 	"short/internal/svc"
 	"short/internal/types"
+	"short/model"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -84,19 +85,48 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 	var seq uint64
 	var short string
 
-	// 2. 取号
-	seq, err = l.svcCtx.Sequence.Next()
-	if err != nil {
-		logx.Errorw(
-			"l.svcCtx.Sequence.Next failed,",
-			logx.LogField{Key: "err", Value: err.Error()},
-		)
+	for {
+		// 2. 取号
+		seq, err = l.svcCtx.Sequence.Next()
+		if err != nil {
+			logx.Errorw(
+				"l.svcCtx.Sequence.Next failed,",
+				logx.LogField{Key: "err", Value: err.Error()},
+			)
+
+			return nil, err
+		}
+
+		// 3. 号码转短链
+		// - 安全性: 打乱62进制字符
+		// - 避免特殊字符
+		short = base62.ChangeToBase62(seq)
+		if _, ok := l.svcCtx.ShortUrlBlackList[short]; ok {
+			logx.Errorw(
+				"short existed in balck list",
+				logx.LogField{Key: "err", Value: err.Error()},
+			)
+		} else if !ok {
+			break
+		}
 	}
 
-	// 3. 号码转短链
-	// - 安全性: 打乱62进制字符
-	// - 避免特殊字符
-	short = base62.ChangeToBase62(seq)
+	// 4. 存储映射关系表
+	if _, err = l.svcCtx.ShortUrlModel.Insert(
+		l.ctx,
+		&model.ReflectMap{
+			Lurl: sql.NullString{String: req.LongUrl, Valid: true},
+			Md5:  sql.NullString{String: md5Value, Valid: true},
+			Surl: sql.NullString{String: short, Valid: true},
+		},
+	); err != nil {
+		logx.Errorw(
+			"l.svcCtx.ShortUrlModel.Insert failed",
+			logx.LogField{Key: "err", Value: err.Error()},
+		)
+
+		return nil, err
+	}
 
 	return nil, nil
 }

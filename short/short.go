@@ -22,7 +22,7 @@ func main() {
 	conf.MustLoad(*configFile, &c) // 加载配置
 	fmt.Printf("load config: %#v\n", c)
 
-	base62.MustInit(c.Base62String) // base62模块初始化
+	base62.MustInit(c.Base62String) // base62模块初始化, 从配置加载
 
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()
