@@ -27,9 +27,14 @@ go mod tidy
 
 
 ```bash
-# 生成代码
+# 生成代码(不带缓存版)
 goctl model mysql datasource -url="root:123456@tcp(127.0.0.1:3306)/short" -table="sequence" -dir="./model"
 goctl model mysql datasource -url="root:123456@tcp(127.0.0.1:3306)/short" -table="reflect_map" -dir="./model"
+
+
+# 带缓存版
+goctl model mysql datasource -url="root:123456@tcp(127.0.0.1:3306)/short" -table="reflect_map" -dir="./model" -c 
+
 
 # 下载依赖
 go mod tidy
@@ -50,3 +55,8 @@ go mod tidy
 * 5. 针对urltool, md5, base62编写单元测试
 * 6. 实现发号器 (mysql:replace, redis:incr) 复用接口
 * 7. 号码转短链：10 ---> 62进制
+* 8. 短链特殊词检查(准备短链黑名单, map检查特殊词)
+* 9. 存储长短链映射, 返回响应
+* 10. 编写重定向模块(show), handler进行validate校验，logic编写查询逻辑并返回响应, 拿到长链后handler进行重定向
+* 11. 编写重定向模块缓存, 生成带缓存的reflect_map_model层代码, 内嵌singleflight进行请求合并
+* 12. 

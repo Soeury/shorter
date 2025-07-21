@@ -14,3 +14,13 @@ ShortUrlBlackList: ["version", "fuck", "health", "stupid", "port", "password", "
 
 ShortDomain: "kedudu.cn" 
 
+CacheRedis:
+  - Host: 192.168.19.130:6379
+    Pass: "123456"
+
+RedisConf:
+  Host: 192.168.19.130:6379
+  Type: node
+  Pass: "123456"
+  Tls: false
+

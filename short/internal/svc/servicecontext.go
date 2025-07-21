@@ -26,7 +26,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 	return &ServiceContext{
 		Config:            c,
-		ShortUrlModel:     model.NewReflectMapModel(conn),
+		ShortUrlModel:     model.NewReflectMapModel(conn, c.CacheRedis),
 		Sequence:          sequence.NewSMysql(c.Sequence.DSN),
 		ShortUrlBlackList: m,
 	}
