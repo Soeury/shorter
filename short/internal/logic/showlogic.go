@@ -6,10 +6,10 @@ import (
 	"errors"
 	"time"
 
-	"short/internal/pkg/base62"
 	"short/internal/svc"
 	"short/internal/types"
 	"short/model"
+	"short/pkg/base62"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"

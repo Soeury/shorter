@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"time"
 
-	"short/internal/pkg/base62"
-	"short/internal/pkg/connect"
-	"short/internal/pkg/md5"
-	"short/internal/pkg/urltool"
 	"short/internal/svc"
 	"short/internal/types"
 	"short/model"
+	"short/pkg/base62"
+	"short/pkg/connect"
+	"short/pkg/md5"
+	"short/pkg/urltool"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
