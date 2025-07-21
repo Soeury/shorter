@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"short/internal/pkg/base62"
 	"short/internal/pkg/connect"
@@ -40,20 +41,29 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		return nil, errors.New("invalid longUrl")
 	}
 
-	// - 查长链(md5)
+	// - 查长链(md5): 两张奇偶表
 	md5Value := md5.Sum([]byte(req.LongUrl))
 	_, err = l.svcCtx.ShortUrlModel.FindOneByMd5(l.ctx, sql.NullString{String: md5Value, Valid: true})
-	if err != sqlx.ErrNotFound {
-		if err == nil {
-			return nil, fmt.Errorf("longurl has converted yet")
-		}
-
+	if err != sql.ErrNoRows && err != nil {
 		logx.Errorw(
-			"ShortUrlModel.FindOneByMd5 failed",
+			"l.svcCtx.ShortUrlModel.FindOneByMd5 failed",
 			logx.LogField{Key: "err", Value: err.Error()},
 		)
-
 		return nil, err
+	}
+	if err == nil {
+		return nil, errors.New("longUrl already existed in reflect_map")
+	}
+	_, err = l.svcCtx.ShortUrlModel2.FindOneByMd5(l.ctx, sql.NullString{String: md5Value, Valid: true})
+	if err != sql.ErrNoRows && err != nil {
+		logx.Errorw(
+			"l.svcCtx.ShortUrlModel2.FindOneByMd5 failed",
+			logx.LogField{Key: "err", Value: err.Error()},
+		)
+		return nil, err
+	}
+	if err == nil {
+		return nil, errors.New("longUrl already existed in reflect_map2")
 	}
 
 	// - 拆分url获取短链
@@ -67,19 +77,28 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		return nil, err
 	}
 
-	// - 查短链
+	// - 查短链: 两张表
 	_, err = l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: baseUrl, Valid: true})
-	if err != sqlx.ErrNotFound {
-		if err == nil {
-			return nil, fmt.Errorf("cannot use shortUrl convert to shortUrl")
-		}
-
+	if err != sqlx.ErrNotFound && err != nil {
 		logx.Errorw(
 			"ShortUrlModel.FindOneBySurl failed,",
 			logx.LogField{Key: "err", Value: err.Error()},
 		)
-
 		return nil, err
+	}
+	if err == nil {
+		return nil, fmt.Errorf("cannot use shortUrl convert to shortUrl")
+	}
+	_, err = l.svcCtx.ShortUrlModel2.FindOneBySurl(l.ctx, sql.NullString{String: baseUrl, Valid: true})
+	if err != sqlx.ErrNotFound && err != nil {
+		logx.Errorw(
+			"ShortUrlModel2.FindOneBySurl failed,",
+			logx.LogField{Key: "err", Value: err.Error()},
+		)
+		return nil, err
+	}
+	if err == nil {
+		return nil, fmt.Errorf("cannot use shortUrl convert to shortUrl")
 	}
 
 	var seq uint64
@@ -111,30 +130,71 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		}
 	}
 
-	// 4. 存储映射关系表
-	if _, err = l.svcCtx.ShortUrlModel.Insert(
-		l.ctx,
-		&model.ReflectMap{
-			Lurl: sql.NullString{String: req.LongUrl, Valid: true},
-			Md5:  sql.NullString{String: md5Value, Valid: true},
-			Surl: sql.NullString{String: short, Valid: true},
-		},
-	); err != nil {
-		logx.Errorw(
-			"l.svcCtx.ShortUrlModel.Insert failed",
-			logx.LogField{Key: "err", Value: err.Error()},
-		)
-
-		return nil, err
+	// 4. 存储映射关系表, 根据取出号的奇偶性选择表
+	if seq%2 == 1 {
+		if _, err := l.svcCtx.ShortUrlModel.Insert(
+			l.ctx,
+			&model.ReflectMap{
+				Lurl: sql.NullString{String: req.LongUrl, Valid: true},
+				Md5:  sql.NullString{String: md5Value, Valid: true},
+				Surl: sql.NullString{String: short, Valid: true},
+				ExpireAt: sql.NullTime{
+					Time: time.Date(
+						time.Now().Year(),
+						time.Now().Month()+6,
+						time.Now().Day(),
+						time.Now().Hour(),
+						time.Now().Minute(),
+						time.Now().Second(),
+						time.Now().Nanosecond(),
+						time.UTC,
+					),
+					Valid: true,
+				},
+			},
+		); err != nil {
+			logx.Errorw(
+				"l.svcCtx.ShortUrlModel.Insert failed",
+				logx.LogField{Key: "err", Value: err.Error()},
+			)
+			return nil, err
+		}
+	} else {
+		if _, err := l.svcCtx.ShortUrlModel2.Insert(
+			l.ctx,
+			&model.ReflectMap2{
+				Lurl: sql.NullString{String: req.LongUrl, Valid: true},
+				Md5:  sql.NullString{String: md5Value, Valid: true},
+				Surl: sql.NullString{String: short, Valid: true},
+				ExpireAt: sql.NullTime{
+					Time: time.Date(
+						time.Now().Year(),
+						time.Now().Month()+6,
+						time.Now().Day(),
+						time.Now().Hour(),
+						time.Now().Minute(),
+						time.Now().Second(),
+						time.Now().Nanosecond(),
+						time.UTC,
+					),
+					Valid: true,
+				},
+			},
+		); err != nil {
+			logx.Errorw(
+				"l.svcCtx.ShortUrlModel2.Insert failed",
+				logx.LogField{Key: "key", Value: err.Error()},
+			)
+			return nil, err
+		}
 	}
 
-	// - 短链存储到 filter
+	// 5. 短链存储到 filter
 	if err := l.svcCtx.Filter.Add([]byte(short)); err != nil {
 		logx.Errorw(
 			"l.svcCtx.Filter.Add failed",
 			logx.LogField{Key: "err", Value: err.Error()},
 		)
-
 		return nil, err
 	}
 

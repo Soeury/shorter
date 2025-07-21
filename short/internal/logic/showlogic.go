@@ -7,8 +7,10 @@ import (
 
 	"short/internal/svc"
 	"short/internal/types"
+	"short/pkg/base62"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type ShowLogic struct {
@@ -44,18 +46,36 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 	}
 
 	// 2. 根据短链接查询长连接(采用go-zero生成带缓存的Mysql查询, 内嵌singleflight做请求合并)
-	long, err := l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: req.ShortUrl, Valid: true})
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.New("not found longUrl with your shortUrl")
-		}
+	// 短链转成 10 进制，判断序号奇偶性，然后去查库
+	seq := base62.ChangeToBase10(req.ShortUrl)
+	if seq%2 == 1 {
+		long, err := l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: req.ShortUrl, Valid: true})
 
-		logx.Errorw(
-			"l.svcCtx.ShortUrlModel.FindOneBySurl failed",
-			logx.LogField{Key: "err", Value: err.Error()},
-		)
-		return nil, err
+		if err != nil {
+			if err == sqlx.ErrNotFound {
+				return nil, err
+			}
+
+			logx.Errorw(
+				"l.svcCtx.ShortUrlModel.FindOneBySurl",
+				logx.LogField{Key: "err", Value: err.Error()},
+			)
+			return nil, err
+		}
 	}
 
-	return &types.ShowResponse{LongUrl: long.Lurl.String}, nil
+	// long, err := l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: req.ShortUrl, Valid: true})
+	// if err != nil {
+	// 	if err == sql.ErrNoRows {
+	// 		return nil, errors.New("not found longUrl with your shortUrl")
+	// 	}
+
+	// 	logx.Errorw(
+	// 		"l.svcCtx.ShortUrlModel.FindOneBySurl failed",
+	// 		logx.LogField{Key: "err", Value: err.Error()},
+	// 	)
+	// 	return nil, err
+	// }
+
+	return nil, nil
 }

@@ -1,4 +1,4 @@
-create table `reflect_map` (
+create table `reflect_map2` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'primary key',
     `create_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
     `create_by` VARCHAR(64) NOT NULL DEFAULT "rabbit" COMMENT 'create by',
@@ -13,8 +13,8 @@ create table `reflect_map` (
     INDEX(`is_del`),
     UNIQUE(`md5`),
     UNIQUE(`surl`)
-)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT = 'long-short url reflect map'; 
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT = 'long-short url reflect map2'; 
 
 
 SET @@auto_increment_increment = 2;  
-SET @@auto_increment_offset = 1;  
+SET @@auto_increment_offset = 2;  

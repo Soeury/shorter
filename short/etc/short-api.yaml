@@ -5,8 +5,11 @@ Port: 8888
 ShortUrlDB:
   DSN: "root:123456@tcp(127.0.0.1:3306)/short?charset=utf8mb4&parseTime=true"
 
+ShortUrlDB2:
+  DSN: "root:123456@tcp(127.0.0.1:3306)/short2?charset=utf8mb4&parseTime=true"
+
 Sequence:
-  DSN: "root:123456@tcp(127.0.0.1:3306)/short?charset=utf8mb4&parseTime=true"
+  DSN: "root:123456@tcp(127.0.0.1:3306)/sequence?charset=utf8mb4&parseTime=true"
 
 Base62String: "McOP1q23w498abdefghlmprstu5vyzBxC0D6EFG7HIJKLANQRoSTUiVWnXjYZk"
 

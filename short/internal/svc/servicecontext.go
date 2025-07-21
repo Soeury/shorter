@@ -12,14 +12,16 @@ import (
 
 type ServiceContext struct {
 	Config            config.Config
-	ShortUrlModel     model.ReflectMapModel // 长短映射表
-	Sequence          sequence.SeqInter     // 取号表
-	ShortUrlBlackList map[string]struct{}   // 短域名黑名单
-	Filter            *bloom.Filter         // bloomfilter做缓存穿透
+	ShortUrlModel     model.ReflectMapModel  // 长短链映射表1
+	ShortUrlModel2    model.ReflectMap2Model // 长短链映射表2
+	Sequence          sequence.SeqInter      // 取号表
+	ShortUrlBlackList map[string]struct{}    // 短域名黑名单
+	Filter            *bloom.Filter          // bloomfilter  缓存穿透
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	conn := sqlx.NewMysql(c.ShortUrlDB.DSN)
+	conn2 := sqlx.NewMysql(c.ShortUrlDB2.DSN)
 
 	// 将配置中的短域名黑名单加载到map
 	m := make(map[string]struct{}, len(c.ShortUrlBlackList))
@@ -37,6 +39,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
 		Config:            c,
 		ShortUrlModel:     model.NewReflectMapModel(conn, c.CacheRedis),
+		ShortUrlModel2:    model.NewReflectMap2Model(conn2, c.CacheRedis),
 		Sequence:          sequence.NewSMysql(c.Sequence.DSN),
 		ShortUrlBlackList: m,
 		Filter:            filter,

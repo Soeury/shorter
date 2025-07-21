@@ -8,11 +8,15 @@ import (
 type Config struct {
 	rest.RestConf
 
-	ShortUrlDB struct {
+	ShortUrlDB struct { // reflect_map
 		DSN string
 	}
 
-	Sequence struct {
+	ShortUrlDB2 struct { // reflect_map2
+		DSN string
+	}
+
+	Sequence struct { // sequence
 		DSN string
 	}
 
