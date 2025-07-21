@@ -84,6 +84,7 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 
 	var seq uint64
 	var short string
+	var shortUrl string
 
 	for {
 		// 2. 取号
@@ -128,5 +129,7 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		return nil, err
 	}
 
-	return nil, nil
+	// 5. 返回
+	shortUrl = l.svcCtx.Config.ShortDomain + "/" + short
+	return &types.ConvertResponse{ShortUrl: shortUrl}, nil
 }

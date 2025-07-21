@@ -16,4 +16,6 @@ type Config struct {
 	Base62String string
 
 	ShortUrlBlackList []string
+
+	ShortDomain string
 }

@@ -8,6 +8,9 @@ ShortUrlDB:
 Sequence:
   DSN: "root:123456@tcp(127.0.0.1:3306)/short?charset=utf8mb4&parseTime=true"
 
-Base62String: McOP1q23w498abdefghlmprstu5vyzBxC0D6EFG7HIJKLANQRoSTUiVWnXjYZk
+Base62String: "McOP1q23w498abdefghlmprstu5vyzBxC0D6EFG7HIJKLANQRoSTUiVWnXjYZk"
 
 ShortUrlBlackList: ["version", "fuck", "health", "stupid", "port", "password", "html", "golang", "baidu", "api", "route"]
+
+ShortDomain: "kedudu.cn" 
+
