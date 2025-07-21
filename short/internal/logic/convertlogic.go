@@ -105,7 +105,6 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		if _, ok := l.svcCtx.ShortUrlBlackList[short]; ok {
 			logx.Errorw(
 				"short existed in balck list",
-				logx.LogField{Key: "err", Value: err.Error()},
 			)
 		} else if !ok {
 			break
@@ -131,5 +130,6 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 
 	// 5. 返回
 	shortUrl = l.svcCtx.Config.ShortDomain + "/" + short
+	fmt.Printf("shortUrl: %s\n", shortUrl)
 	return &types.ConvertResponse{ShortUrl: shortUrl}, nil
 }
