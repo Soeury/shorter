@@ -71,7 +71,7 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 	_, err = l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: baseUrl, Valid: true})
 	if err != sqlx.ErrNotFound {
 		if err == nil {
-			return nil, fmt.Errorf("use shortUrl convert to shortUrl")
+			return nil, fmt.Errorf("cannot use shortUrl convert to shortUrl")
 		}
 
 		logx.Errorw(
@@ -130,6 +130,5 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 
 	// 5. 返回
 	shortUrl = l.svcCtx.Config.ShortDomain + "/" + short
-	fmt.Printf("shortUrl: %s\n", shortUrl)
 	return &types.ConvertResponse{ShortUrl: shortUrl}, nil
 }
