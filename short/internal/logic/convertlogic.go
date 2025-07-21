@@ -100,7 +100,7 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 
 		// 3. 号码转短链
 		// - 安全性: 打乱62进制字符
-		// - 避免特殊字符
+		// - 避免特殊字符: 短链黑名单
 		short = base62.ChangeToBase62(seq)
 		if _, ok := l.svcCtx.ShortUrlBlackList[short]; ok {
 			logx.Errorw(
@@ -128,7 +128,16 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		return nil, err
 	}
 
-	// 5. 返回
+	// - 短链存储到 filter
+	if err := l.svcCtx.Filter.Add([]byte(short)); err != nil {
+		logx.Errorw(
+			"l.svcCtx.Filter.Add failed",
+			logx.LogField{Key: "err", Value: err.Error()},
+		)
+
+		return nil, err
+	}
+
 	shortUrl = l.svcCtx.Config.ShortDomain + "/" + short
 	return &types.ConvertResponse{ShortUrl: shortUrl}, nil
 }

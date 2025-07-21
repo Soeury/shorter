@@ -16,11 +16,18 @@ type Config struct {
 		DSN string
 	}
 
+	RedisConf struct {
+		Host string
+		Type string
+		Pass string
+		Tls  bool
+	} // filter
+
 	Base62String string
 
 	ShortUrlBlackList []string
 
 	ShortDomain string
 
-	CacheRedis cache.CacheConf
+	CacheRedis cache.CacheConf // sequence:redis
 }
