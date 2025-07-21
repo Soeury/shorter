@@ -3,10 +3,9 @@ package logic
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
 	"time"
 
+	erl "short/internal/errlogs"
 	"short/internal/svc"
 	"short/internal/types"
 	"short/model"
@@ -38,7 +37,7 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 	// 1. 取长链，校验数据(validate)
 	// - 长链不为空且有效
 	if ok := connect.Get(req.LongUrl); !ok {
-		return nil, errors.New("invalid longUrl")
+		return nil, erl.ErrInvalidLongUrl
 	}
 
 	// - 查长链(md5): 两张奇偶表
@@ -46,59 +45,61 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 	_, err = l.svcCtx.ShortUrlModel.FindOneByMd5(l.ctx, sql.NullString{String: md5Value, Valid: true})
 	if err != sql.ErrNoRows && err != nil {
 		logx.Errorw(
-			"l.svcCtx.ShortUrlModel.FindOneByMd5 failed",
+			erl.LogFindByMd5Failed,
 			logx.LogField{Key: "err", Value: err.Error()},
 		)
-		return nil, err
+		return nil, erl.ErrFindByMd5Failed
 	}
 	if err == nil {
-		return nil, errors.New("longUrl already existed in reflect_map")
+		return nil, erl.ErrLongUrlExisted
 	}
+
 	_, err = l.svcCtx.ShortUrlModel2.FindOneByMd5(l.ctx, sql.NullString{String: md5Value, Valid: true})
 	if err != sql.ErrNoRows && err != nil {
 		logx.Errorw(
-			"l.svcCtx.ShortUrlModel2.FindOneByMd5 failed",
+			erl.LogFindByMd5Failed,
 			logx.LogField{Key: "err", Value: err.Error()},
 		)
-		return nil, err
+		return nil, erl.ErrFindByMd5Failed
 	}
 	if err == nil {
-		return nil, errors.New("longUrl already existed in reflect_map2")
+		return nil, erl.ErrLongUrlExisted
 	}
 
 	// - 拆分url获取短链
 	baseUrl, err := urltool.GetBasePath(req.LongUrl)
 	if err != nil {
 		logx.Errorw(
-			"urltool.GetBasePath failed",
+			erl.LogURLToolGetFailed,
 			logx.LogField{Key: "lurl", Value: req.LongUrl}, logx.LogField{Key: "err", Value: err.Error()},
 		)
 
-		return nil, err
+		return nil, erl.ErrURLToolGetFailed
 	}
 
 	// - 查短链: 两张表
 	_, err = l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: baseUrl, Valid: true})
 	if err != sqlx.ErrNotFound && err != nil {
 		logx.Errorw(
-			"ShortUrlModel.FindOneBySurl failed,",
+			erl.LogFindBySurlFailed,
 			logx.LogField{Key: "err", Value: err.Error()},
 		)
-		return nil, err
+		return nil, erl.ErrFindBySurlFailed
 	}
 	if err == nil {
-		return nil, fmt.Errorf("cannot use shortUrl convert to shortUrl")
+		return nil, erl.ErrUseShortUrlToConvert
 	}
+
 	_, err = l.svcCtx.ShortUrlModel2.FindOneBySurl(l.ctx, sql.NullString{String: baseUrl, Valid: true})
 	if err != sqlx.ErrNotFound && err != nil {
 		logx.Errorw(
-			"ShortUrlModel2.FindOneBySurl failed,",
+			erl.LogFindBySurlFailed,
 			logx.LogField{Key: "err", Value: err.Error()},
 		)
-		return nil, err
+		return nil, erl.ErrFindBySurlFailed
 	}
 	if err == nil {
-		return nil, fmt.Errorf("cannot use shortUrl convert to shortUrl")
+		return nil, erl.ErrUseShortUrlToConvert
 	}
 
 	var seq uint64
@@ -110,11 +111,11 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		seq, err = l.svcCtx.Sequence.Next()
 		if err != nil {
 			logx.Errorw(
-				"l.svcCtx.Sequence.Next failed,",
+				erl.LogGetNextSeqFailed,
 				logx.LogField{Key: "err", Value: err.Error()},
 			)
 
-			return nil, err
+			return nil, erl.ErrGetNextSeqFailed
 		}
 
 		// 3. 号码转短链
@@ -123,8 +124,8 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		short = base62.ChangeToBase62(seq)
 		if _, ok := l.svcCtx.ShortUrlBlackList[short]; ok {
 			logx.Errorw(
-				"short existed in balck list",
-				logx.LogField{Key: "err", Value: errors.New("short existed in black list").Error()},
+				erl.LogShortExistInBlackList,
+				logx.LogField{Key: "err", Value: erl.ErrShortExistInBlackList.Error()},
 			)
 		} else if !ok {
 			break
@@ -155,10 +156,10 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 			},
 		); err != nil {
 			logx.Errorw(
-				"l.svcCtx.ShortUrlModel.Insert failed",
+				erl.LogInsertDBFailed,
 				logx.LogField{Key: "err", Value: err.Error()},
 			)
-			return nil, err
+			return nil, erl.ErrInsertDBFailed
 		}
 	} else {
 		if _, err := l.svcCtx.ShortUrlModel2.Insert(
@@ -183,20 +184,20 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 			},
 		); err != nil {
 			logx.Errorw(
-				"l.svcCtx.ShortUrlModel2.Insert failed",
+				erl.LogInsertDBFailed,
 				logx.LogField{Key: "key", Value: err.Error()},
 			)
-			return nil, err
+			return nil, erl.ErrInsertDBFailed
 		}
 	}
 
 	// 5. 短链存储到 filter
 	if err := l.svcCtx.Filter.Add([]byte(short)); err != nil {
 		logx.Errorw(
-			"l.svcCtx.Filter.Add failed",
+			erl.LogFilterAddFailed,
 			logx.LogField{Key: "err", Value: err.Error()},
 		)
-		return nil, err
+		return nil, erl.ErrFilterAddFailed
 	}
 
 	shortUrl = l.svcCtx.Config.ShortDomain + "/" + short

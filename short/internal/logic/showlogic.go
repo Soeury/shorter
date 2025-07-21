@@ -3,9 +3,9 @@ package logic
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"time"
 
+	erl "short/internal/errlogs"
 	"short/internal/svc"
 	"short/internal/types"
 	"short/model"
@@ -36,15 +36,15 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 	exists, err := l.svcCtx.Filter.Exists([]byte(req.ShortUrl))
 	if err != nil {
 		logx.Errorw(
-			"l.svcCtx.Filter.Exists failed",
+			erl.LogFilterNotExisted,
 			logx.LogField{Key: "err", Value: err.Error()},
 		)
 
-		return nil, err
+		return nil, erl.ErrFilterNotExisted
 	}
 
 	if !exists {
-		return nil, errors.New("shortUrl not exists in bloomFilter")
+		return nil, erl.ErrShortUrlNotExistedInFilter
 	}
 
 	// 2. 根据短链接查询长连接(采用go-zero生成带缓存的Mysql查询, 内嵌singleflight做请求合并)
@@ -58,14 +58,14 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 			}
 
 			logx.Errorw(
-				"l.svcCtx.ShortUrlModel.FindOneBySurl",
+				erl.LogFindBySurlFailed,
 				logx.LogField{Key: "err", Value: err.Error()},
 			)
-			return nil, err
+			return nil, erl.ErrFindBySurlFailed
 		}
 
 		if u.IsDel == 1 {
-			return nil, errors.New("shortUrl has been deleted")
+			return nil, erl.ErrShortUrlHasBeenDel
 		}
 
 		// 判断是否过期，过期则软删除
@@ -87,10 +87,10 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 
 				if err != nil {
 					logx.Errorw(
-						"l.svcCtx.ShortUrlModel.Update failed",
+						erl.LogUpdateDBFailed,
 						logx.Field("err", err),
 					)
-					return nil, err
+					return nil, erl.ErrUpdateDBFailed
 				}
 			}
 		}
@@ -103,14 +103,14 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 			}
 
 			logx.Errorw(
-				"l.svcCtx.ShortUrlModel2.FindOneBySurl",
+				erl.LogFindBySurlFailed,
 				logx.LogField{Key: "err", Value: err.Error()},
 			)
-			return nil, err
+			return nil, erl.ErrFindBySurlFailed
 		}
 
 		if u.IsDel == 1 {
-			return nil, errors.New("shortUrl has been deleted")
+			return nil, erl.ErrShortUrlHasBeenDel
 		}
 
 		if u.ExpireAt.Valid {
@@ -131,10 +131,10 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 
 				if err != nil {
 					logx.Errorw(
-						"l.svcCtx.ShortUrlModel2.Update failed",
+						erl.LogUpdateDBFailed,
 						logx.Field("err", err),
 					)
-					return nil, err
+					return nil, erl.ErrUpdateDBFailed
 				}
 			}
 		}

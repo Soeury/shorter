@@ -6,8 +6,8 @@ import (
 
 	"short/internal/config"
 	"short/internal/handler"
-	"short/internal/pkg/base62"
 	"short/internal/svc"
+	"short/pkg/base62"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
