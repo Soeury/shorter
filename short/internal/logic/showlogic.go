@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
+	"short/internal/pkg/base62"
 	"short/internal/svc"
 	"short/internal/types"
-	"short/pkg/base62"
+	"short/model"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -46,11 +48,10 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 	}
 
 	// 2. 根据短链接查询长连接(采用go-zero生成带缓存的Mysql查询, 内嵌singleflight做请求合并)
-	// 短链转成 10 进制，判断序号奇偶性，然后去查库
+	// 短链转成 10 进制，判断序号奇偶性，然后查库
 	seq := base62.ChangeToBase10(req.ShortUrl)
 	if seq%2 == 1 {
-		long, err := l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: req.ShortUrl, Valid: true})
-
+		u, err := l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: req.ShortUrl, Valid: true})
 		if err != nil {
 			if err == sqlx.ErrNotFound {
 				return nil, err
@@ -62,20 +63,82 @@ func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err 
 			)
 			return nil, err
 		}
+
+		if u.IsDel == 1 {
+			return nil, errors.New("shortUrl has been deleted")
+		}
+
+		// 判断是否过期，过期则软删除
+		if u.ExpireAt.Valid {
+			if time.Now().After(u.ExpireAt.Time) {
+				err = l.svcCtx.ShortUrlModel.Update(
+					l.ctx,
+					&model.ReflectMap{
+						Id:       u.Id,
+						CreateAt: u.CreateAt,
+						CreateBy: u.CreateBy,
+						IsDel:    1,
+						Lurl:     u.Lurl,
+						Md5:      u.Md5,
+						Surl:     u.Surl,
+						ExpireAt: u.ExpireAt,
+					},
+				)
+
+				if err != nil {
+					logx.Errorw(
+						"l.svcCtx.ShortUrlModel.Update failed",
+						logx.Field("err", err),
+					)
+					return nil, err
+				}
+			}
+		}
+
+		return &types.ShowResponse{LongUrl: u.Lurl.String}, nil
+	} else {
+		u, err := l.svcCtx.ShortUrlModel2.FindOneBySurl(l.ctx, sql.NullString{String: req.ShortUrl, Valid: true})
+		if err != nil {
+			if err == sqlx.ErrNotFound {
+				return nil, err
+			}
+
+			logx.Errorw(
+				"l.svcCtx.ShortUrlModel2.FindOneBySurl",
+				logx.LogField{Key: "err", Value: err.Error()},
+			)
+			return nil, err
+		}
+
+		if u.IsDel == 1 {
+			return nil, errors.New("shortUrl has been deleted")
+		}
+
+		if u.ExpireAt.Valid {
+			if time.Now().After(u.ExpireAt.Time) {
+				err = l.svcCtx.ShortUrlModel2.Update(
+					l.ctx,
+					&model.ReflectMap2{
+						Id:       u.Id,
+						CreateAt: u.CreateAt,
+						CreateBy: u.CreateBy,
+						IsDel:    1,
+						Lurl:     u.Lurl,
+						Md5:      u.Md5,
+						Surl:     u.Surl,
+						ExpireAt: u.ExpireAt,
+					},
+				)
+
+				if err != nil {
+					logx.Errorw(
+						"l.svcCtx.ShortUrlModel2.Update failed",
+						logx.Field("err", err),
+					)
+					return nil, err
+				}
+			}
+		}
+		return &types.ShowResponse{LongUrl: u.Lurl.String}, nil
 	}
-
-	// long, err := l.svcCtx.ShortUrlModel.FindOneBySurl(l.ctx, sql.NullString{String: req.ShortUrl, Valid: true})
-	// if err != nil {
-	// 	if err == sql.ErrNoRows {
-	// 		return nil, errors.New("not found longUrl with your shortUrl")
-	// 	}
-
-	// 	logx.Errorw(
-	// 		"l.svcCtx.ShortUrlModel.FindOneBySurl failed",
-	// 		logx.LogField{Key: "err", Value: err.Error()},
-	// 	)
-	// 	return nil, err
-	// }
-
-	return nil, nil
 }
