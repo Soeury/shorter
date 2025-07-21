@@ -62,3 +62,4 @@ go mod tidy
 * 10. 编写重定向模块(show), handler进行validate校验，logic编写查询逻辑并返回响应, 拿到长链后handler进行重定向
 * 11. 编写重定向模块缓存, 生成带缓存的reflect_map_model层代码, 内嵌singleflight进行请求合并
 * 12. 增加fileter防止缓存击穿，生成的所有短链会保存到filter, 查询长链进行重定向时会先查询过滤器。(做缓存击穿)
+* 13. 拆分奇偶表和取号表, 采用3个不同的数据库, (存储分离, 查询分离) 
